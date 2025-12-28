@@ -20,7 +20,11 @@ app = FastAPI()
 @app.post("/generate-video")
 def read_root(request: VideoRequest):
   
-    bucket_name = "video_generation_bucket"
+    bucket_name = os.getenv("S3_BUCKET_NAME")
+    
+    if not bucket_name:
+        raise RuntimeError("S3_BUCKET_NAME environment variable is not set")
+    
     bucket_folder = "generated_videos"
   
     output_path = os.path.join("output", f"{uuid.uuid4()}.wav")
