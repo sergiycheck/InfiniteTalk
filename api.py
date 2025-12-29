@@ -12,8 +12,8 @@ import json
 
 class VideoRequest(BaseModel):
     text_prompt: str
-    image_s3_link: str
-    audio_s3_link: str
+    image_s3_key: str
+    audio_s3_key: str
 
 app = FastAPI()
 
@@ -24,21 +24,22 @@ def read_root(request: VideoRequest):
     
     if not bucket_name:
         raise RuntimeError("S3_BUCKET_NAME environment variable is not set")
+      
+    output_path = os.path.join("output")
     
-    bucket_folder = "generated_videos"
-  
-    output_path = os.path.join("output", f"{uuid.uuid4()}.wav")
+    if(not os.path.exists("output")):
+        os.makedirs("output")
     
     image_path = download_s3_file(
         bucket=bucket_name,
-        key=request.image_s3_link.replace(f"s3://{bucket_name}/", ""),
-        local_path=os.path.join("temp", f"{uuid.uuid4()}_ref.wav")
+        key=request.image_s3_key,
+        local_path=output_path
     )
     
     audio_path = download_s3_file(
         bucket=bucket_name,
-        key=request.audio_s3_link.replace(f"s3://{bucket_name}/", ""),
-        local_path=os.path.join("temp", f"{uuid.uuid4()}_ref.wav")
+        key=request.audio_s3_key,
+        local_path=output_path
     )
     
     generated_video_name = f"infinitetalk_{uuid.uuid4().hex}.mp4"
@@ -67,7 +68,7 @@ def read_root(request: VideoRequest):
     
     upload_s3_file(
         bucket=bucket_name,
-        key=f"{bucket_folder}/{generated_video_name}",
+        key=f"{generated_video_name}",
         local_path=generated_video_name,
     )
     
@@ -76,6 +77,6 @@ def read_root(request: VideoRequest):
     os.remove(audio_path)
     os.remove(generated_video_name)
     
-    full_generated_video_url = f"https://{bucket_name}.s3.amazonaws.com/{bucket_folder}/{generated_video_name}"
+    full_generated_video_url = f"https://{bucket_name}.s3.amazonaws.com/{generated_video_name}"
     
     return {"video_url": full_generated_video_url}
