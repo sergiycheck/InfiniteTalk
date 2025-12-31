@@ -6,6 +6,8 @@ from boto3_utils import download_s3_file, upload_s3_file
 from utils import now_local_str
 import uuid
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def infinite_talk_worker(image_s3_key: str, audio_s3_key: str, text_prompt: str):
     try:
         
@@ -14,7 +16,7 @@ def infinite_talk_worker(image_s3_key: str, audio_s3_key: str, text_prompt: str)
         if not bucket_name:
             raise RuntimeError("S3_BUCKET_NAME environment variable is not set")
         
-        output_path = os.path.join("output")
+        output_path = os.path.join(BASE_DIR, "output")
         
         os.makedirs(output_path, exist_ok=True)
 
