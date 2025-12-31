@@ -53,12 +53,18 @@ def infinite_talk_worker_wrapper(request: dict, queue: mp.Queue, job_semaphore: 
   finally:
     job_semaphore.release()
 
-async def ws_event_forwarder(job_id: str, queues: Dict[str, mp.Queue]):
+async def ws_event_forwarder(job_id: str, queues: mp.Queue):
     try:
-        websocket = active_connections.get(job_id)
-        if not websocket:
-            return
-
+        waiting_for_connection_time = 10  # seconds
+        while True:
+            websocket = active_connections.get(job_id)
+            waiting_for_connection_time -= 1
+            await asyncio.sleep(1)
+            if not websocket and waiting_for_connection_time <= 0:
+                break
+            if websocket:
+                break
+            
         while True:
             msg = await asyncio.to_thread(queues[job_id].get)
             await websocket.send_text(json.dumps(msg))
